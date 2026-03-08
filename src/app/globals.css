@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+:root {
+  --forest: #4B5A2A;
+  --forest-dark: #3a4520;
+  --forest-light: #6b7f3a;
+}
+
+html {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  background-color: #f5f4ef;
+  color: #1a1a1a;
+}
+
+* {
+  box-sizing: border-box;
+}
