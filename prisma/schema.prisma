@@ -8,11 +8,12 @@ generator client {
 }
 
 model User {
-  id        String      @id @default(uuid())
-  email     String      @unique
-  isAdmin   Boolean     @default(false)
-  createdAt DateTime    @default(now())
-  tokens    AuthToken[]
+  id            String              @id @default(uuid())
+  email         String              @unique
+  isAdmin       Boolean             @default(false)
+  createdAt     DateTime            @default(now())
+  tokens        AuthToken[]
+  registrations EventRegistration[]
 }
 
 model AuthToken {
@@ -53,4 +54,32 @@ model InventoryItem {
   notes             String   @default("")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model Event {
+  id                   String              @id @default(uuid())
+  title                String
+  type                 String
+  date                 DateTime
+  guide                String              @default("")
+  description          String              @default("")
+  cost                 Float?
+  spots                Int?
+  requiresRegistration Boolean             @default(false)
+  visible              Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  registrations        EventRegistration[]
+}
+
+model EventRegistration {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
 }

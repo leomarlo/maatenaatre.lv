@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 const MENU_CATEGORIES = ['Cocktail', 'Teas', 'Coffees', 'Lemonades', 'Snacks', 'Ice-creams', 'Non-material Things'];
 const CATEGORY_LABELS: Record<string, string> = {
@@ -366,10 +366,191 @@ function InventoryTab() {
   );
 }
 
+// ── Events tab ────────────────────────────────────────────────────────────────
+
+const EVENT_TYPES = [
+  { value: 'excursion', label: 'Ekskursija' },
+  { value: 'workshop', label: 'Darbnīca' },
+  { value: 'other', label: 'Cits' },
+];
+
+const DEFAULT_EVENT_FORM = {
+  title: '', type: 'excursion', date: '', guide: '', description: '', cost: '', spots: '', requiresRegistration: false, visible: true,
+};
+
+interface AdminEvent {
+  id: string;
+  title: string;
+  type: string;
+  date: string;
+  guide: string;
+  description: string;
+  cost: number | null;
+  spots: number | null;
+  requiresRegistration: boolean;
+  visible: boolean;
+  _count: { registrations: number };
+  registrations: { id: string; name: string; user: { email: string } }[];
+}
+
+function EventsTab() {
+  const [events, setEvents] = useState<AdminEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(DEFAULT_EVENT_FORM);
+  const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const r = await fetch('/api/events/all');
+      if (r.ok) setEvents(await r.json());
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function toggleVisible(id: string, value: boolean) {
+    await fetch(`/api/events/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visible: value }) });
+    load();
+  }
+
+  async function del(id: string) {
+    if (!confirm('Dzēst šo pasākumu?')) return;
+    await fetch(`/api/events/${id}`, { method: 'DELETE' });
+    load();
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    const t = e.target;
+    setForm(f => ({ ...f, [t.name]: t instanceof HTMLInputElement && t.type === 'checkbox' ? t.checked : t.value }));
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const r = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (r.ok) { setForm(DEFAULT_EVENT_FORM); setShowForm(false); load(); }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <span className="text-sm text-[#4B5A2A]/60">{events.length} pasākumi</span>
+        <button onClick={() => setShowForm(s => !s)} className="px-4 py-1.5 bg-[#4B5A2A] text-white rounded text-sm hover:bg-[#3a4520] transition-colors">
+          {showForm ? 'Aizvērt' : '+ Pievienot'}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={submit} className="bg-white rounded-lg border border-[#4B5A2A]/20 p-5 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="md:col-span-2"><label className={LABEL}>Nosaukums *</label><input name="title" value={form.title} onChange={handleChange} required className={INPUT} /></div>
+            <div>
+              <label className={LABEL}>Tips *</label>
+              <select name="type" value={form.type} onChange={handleChange} className={INPUT}>
+                {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </select>
+            </div>
+            <div><label className={LABEL}>Datums *</label><input name="date" type="datetime-local" value={form.date} onChange={handleChange} required className={INPUT} /></div>
+            <div><label className={LABEL}>Vadītājs</label><input name="guide" value={form.guide} onChange={handleChange} className={INPUT} /></div>
+            <div><label className={LABEL}>Cena (€)</label><input name="cost" type="number" step="0.01" value={form.cost} onChange={handleChange} className={INPUT} /></div>
+            <div><label className={LABEL}>Vietas</label><input name="spots" type="number" value={form.spots} onChange={handleChange} className={INPUT} /></div>
+            <div className="md:col-span-3"><label className={LABEL}>Apraksts</label><textarea name="description" value={form.description} onChange={handleChange} rows={2} className={INPUT} /></div>
+            <div className="md:col-span-3 flex gap-6">
+              {([['requiresRegistration', 'Nepieciešama reģistrācija'], ['visible', 'Redzams']] as const).map(([f, lbl]) => (
+                <label key={f} className="flex items-center gap-2 text-sm text-[#4B5A2A] cursor-pointer">
+                  <input type="checkbox" name={f} checked={form[f] as boolean} onChange={handleChange} className="accent-[#4B5A2A]" />
+                  {lbl}
+                </label>
+              ))}
+            </div>
+          </div>
+          <button type="submit" disabled={saving} className="mt-3 px-5 py-2 bg-[#4B5A2A] text-white rounded text-sm hover:bg-[#3a4520] disabled:opacity-60">
+            {saving ? 'Saglabā…' : 'Pievienot'}
+          </button>
+        </form>
+      )}
+
+      {loading ? (
+        <div className="text-center py-10 text-[#4B5A2A]/40">Ielādē…</div>
+      ) : (
+        <div className="bg-white rounded-lg border border-[#4B5A2A]/20 overflow-x-auto">
+          <table className="w-full text-sm min-w-[700px]">
+            <thead>
+              <tr className="bg-[#4B5A2A]/5 text-[#4B5A2A] text-left text-xs uppercase tracking-wide">
+                <th className="px-3 py-3">Nosaukums</th>
+                <th className="px-3 py-3">Tips</th>
+                <th className="px-3 py-3">Datums</th>
+                <th className="px-3 py-3">Vadītājs</th>
+                <th className="px-3 py-3 text-right">Cena</th>
+                <th className="px-3 py-3 text-center">Vietas</th>
+                <th className="px-3 py-3 text-center">Pierakst.</th>
+                <th className="px-3 py-3 text-center">Redzams</th>
+                <th className="px-3 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((event, i) => (
+                <React.Fragment key={event.id}>
+                  <tr className={`border-t border-[#4B5A2A]/10 ${i % 2 === 0 ? '' : 'bg-[#4B5A2A]/[0.02]'}`}>
+                    <td className="px-3 py-2.5 font-medium text-gray-800">
+                      {event.requiresRegistration && (
+                        <button onClick={() => setExpanded(expanded === event.id ? null : event.id)} className="mr-1 text-[#4B5A2A]/40 hover:text-[#4B5A2A] text-xs">
+                          {expanded === event.id ? '▼' : '▶'}
+                        </button>
+                      )}
+                      {event.title}
+                    </td>
+                    <td className="px-3 py-2.5 text-gray-500 text-xs">{EVENT_TYPES.find(t => t.value === event.type)?.label ?? event.type}</td>
+                    <td className="px-3 py-2.5 text-gray-600 text-xs">{new Date(event.date).toLocaleDateString('lv-LV', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                    <td className="px-3 py-2.5 text-gray-500 text-xs">{event.guide}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">{event.cost !== null ? `€${event.cost.toFixed(2)}` : '—'}</td>
+                    <td className="px-3 py-2.5 text-center text-xs">{event.spots ?? '∞'}</td>
+                    <td className="px-3 py-2.5 text-center text-xs font-medium">{event._count.registrations}</td>
+                    <td className="px-3 py-2.5 text-center"><Toggle on={event.visible} onClick={() => toggleVisible(event.id, !event.visible)} /></td>
+                    <td className="px-3 py-2.5 text-right"><button onClick={() => del(event.id)} className="text-red-400 hover:text-red-600 text-xs">dzēst</button></td>
+                  </tr>
+                  {expanded === event.id && event.registrations.length > 0 && (
+                    <tr className="border-t border-[#4B5A2A]/5 bg-[#4B5A2A]/[0.03]">
+                      <td colSpan={9} className="px-6 py-3">
+                        <div className="text-xs text-[#4B5A2A]/60 font-semibold uppercase tracking-wide mb-2">Pieteikušies</div>
+                        <div className="space-y-1">
+                          {event.registrations.map(reg => (
+                            <div key={reg.id} className="flex gap-4 text-xs text-gray-600">
+                              <span className="font-medium">{reg.name}</span>
+                              <span className="text-gray-400">{reg.user.email}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main AdminClient ──────────────────────────────────────────────────────────
 
 export default function AdminClient() {
-  const [tab, setTab] = useState<'menu' | 'inventory'>('menu');
+  const [tab, setTab] = useState<'menu' | 'inventory' | 'events'>('menu');
 
   return (
     <div className="min-h-screen pt-20 bg-[#f5f4ef]">
@@ -382,18 +563,18 @@ export default function AdminClient() {
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-[#4B5A2A]/15">
-          {(['menu', 'inventory'] as const).map(t => (
+          {(['menu', 'inventory', 'events'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-5 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === t ? 'border-[#4B5A2A] text-[#4B5A2A]' : 'border-transparent text-[#4B5A2A]/50 hover:text-[#4B5A2A]'}`}
             >
-              {t === 'menu' ? 'Ēdienkarte' : 'Krājumi'}
+              {t === 'menu' ? 'Ēdienkarte' : t === 'inventory' ? 'Krājumi' : 'Pasākumi'}
             </button>
           ))}
         </div>
 
-        {tab === 'menu' ? <MenuTab /> : <InventoryTab />}
+        {tab === 'menu' ? <MenuTab /> : tab === 'inventory' ? <InventoryTab /> : <EventsTab />}
       </div>
     </div>
   );
