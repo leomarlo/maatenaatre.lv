@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+
+# Claude Code
+CLAUDE.md
 .pnp
 .pnp.js
 
@@ -38,3 +41,5 @@ Thumbs.db
 postgres_data/
 
 *.DS_Store
+
+CLAUDE.md

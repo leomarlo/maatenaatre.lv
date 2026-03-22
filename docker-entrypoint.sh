@@ -1,14 +1,13 @@
 #!/bin/sh
 set -e
 
-echo "Waiting for database..."
-sleep 2
+echo "Running database migrations..."
+node_modules/.bin/prisma migrate deploy
 
-echo "Pushing Prisma schema to database..."
-node_modules/.bin/prisma db push --accept-data-loss
-
-echo "Running seed..."
-node_modules/.bin/prisma db seed
+if [ "${SEED_DB:-false}" = "true" ]; then
+  echo "Seeding database..."
+  node_modules/.bin/prisma db seed
+fi
 
 echo "Starting app..."
 exec node server.js

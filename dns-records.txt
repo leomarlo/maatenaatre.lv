@@ -1,0 +1,55 @@
+;;
+;; Domain:     maatenaatre.lv.
+;; Exported:   2026-03-22 12:12:15
+;;
+;; This file is intended for use for informational and archival
+;; purposes ONLY and MUST be edited before use on a production
+;; DNS server.  In particular, you must:
+;;   -- update the SOA record with the correct authoritative name server
+;;   -- update the SOA record with the contact e-mail address information
+;;   -- update the NS record(s) with the authoritative name servers for this domain.
+;;
+;; For further information, please consult the BIND documentation
+;; located on the following website:
+;;
+;; http://www.isc.org/
+;;
+;; And RFC 1035:
+;;
+;; http://www.ietf.org/rfc/rfc1035.txt
+;;
+;; Please note that we do NOT offer technical support for any use
+;; of this zone data, the BIND name server, or any other third-party
+;; DNS software.
+;;
+;; Use at your own risk.
+;; SOA Record
+maatenaatre.lv	3600	IN	SOA	celeste.ns.cloudflare.com. dns.cloudflare.com. 2052584813 10000 2400 604800 3600
+
+;; NS Records
+maatenaatre.lv.	86400	IN	NS	celeste.ns.cloudflare.com.
+maatenaatre.lv.	86400	IN	NS	cory.ns.cloudflare.com.
+
+;; A Records
+ludzu.maatenaatre.lv.	1	IN	A	135.181.94.243 ; run a webhook service cf_tags=cf-proxied:true
+
+;; CNAME Records
+maatenaatre.lv.	1	IN	CNAME	maatenaatre-lv.pages.dev. ; cf_tags=cf-proxied:true
+mbo0001._domainkey.maatenaatre.lv.	1	IN	CNAME	mbo0001._domainkey.mailbox.org. ; cf_tags=cf-proxied:false
+mbo0002._domainkey.maatenaatre.lv.	1	IN	CNAME	mbo0002._domainkey.mailbox.org. ; cf_tags=cf-proxied:false
+mbo0003._domainkey.maatenaatre.lv.	1	IN	CNAME	mbo0003._domainkey.mailbox.org. ; cf_tags=cf-proxied:false
+mbo0004._domainkey.maatenaatre.lv.	1	IN	CNAME	mbo0004._domainkey.mailbox.org. ; cf_tags=cf-proxied:false
+
+;; MX Records
+maatenaatre.lv.	1	IN	MX	20 mxext3.mailbox.org.
+maatenaatre.lv.	1	IN	MX	10 mxext2.mailbox.org.
+maatenaatre.lv.	1	IN	MX	10 mxext1.mailbox.org.
+
+;; NS Records
+maatenaatre.lv.	1	IN	NS	ns1.dns.lv.
+maatenaatre.lv.	1	IN	NS	ns2.dns.lv.
+
+;; TXT Records
+3982ad0f8c5b9fc0e94f286bce0269622d7c422e.maatenaatre.lv.	1	IN	TXT	"0f0ff94d0fdfc5b340a2704ad8cfbca45d82bdea"
+_dmarc.maatenaatre.lv.	1	IN	TXT	"v=DMARC1; p=none; rua=mailto:sveiki@maatenaatre.lv"
+maatenaatre.lv.	1	IN	TXT	"v=spf1 include:mailbox.org ~all"

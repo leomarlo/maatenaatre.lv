@@ -1,4 +1,4 @@
-name: Deploy to Hetzner
+name: Deploy to production
 
 on:
   push:
@@ -7,17 +7,16 @@ on:
 
 jobs:
   deploy:
-    name: Deploy via SSH
+    name: Deploy
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Hetzner server
-        uses: appleboy/ssh-action@v1
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.HETZNER_HOST }}
-          username: ${{ secrets.HETZNER_USER != '' && secrets.HETZNER_USER || 'root' }}
-          key: ${{ secrets.HETZNER_SSH_KEY }}
-          script: |
-            cd /opt/maate-naatre
-            git pull
-            docker compose up --build -d
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # No script needed — the SSH key is restricted by a forced command on
+          # the server (authorized_keys) to only run deploy/run.sh.
+          script: "true"
