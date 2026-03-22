@@ -7,8 +7,12 @@ set -e
 APP_DIR="/opt/maatenaatre"
 cd "$APP_DIR"
 
-echo "Resetting database and re-seeding..."
+echo "Applying schema..."
 docker compose -f docker-compose.prod.yml exec -T app sh -c \
-  "node_modules/.bin/prisma migrate reset --force --skip-generate"
+  "node_modules/.bin/prisma db push --accept-data-loss"
+
+echo "Seeding..."
+docker compose -f docker-compose.prod.yml exec -T app sh -c \
+  "node_modules/.bin/prisma db seed"
 
 echo "Done."
