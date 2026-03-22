@@ -58,6 +58,7 @@ function MenuTab() {
   const [form, setForm] = useState(DEFAULT_MENU_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [editPrice, setEditPrice] = useState<Record<string, { price: string; buyingPrice: string }>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,6 +74,14 @@ function MenuTab() {
 
   async function toggle(id: string, field: 'inStock' | 'visibleInMenu', value: boolean) {
     await fetch(`/api/menu-items/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: value }) });
+    load();
+  }
+
+  async function savePrice(id: string) {
+    const vals = editPrice[id];
+    if (!vals) return;
+    await fetch(`/api/menu-items/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ price: parseFloat(vals.price), buyingPrice: parseFloat(vals.buyingPrice) }) });
+    setEditPrice(e => { const n = { ...e }; delete n[id]; return n; });
     load();
   }
 
@@ -171,8 +180,24 @@ function MenuTab() {
                   <tr key={item.id} className={`border-t border-[#4B5A2A]/10 ${i % 2 === 0 ? '' : 'bg-[#4B5A2A]/[0.02]'}`}>
                     <td className="px-3 py-2.5 font-medium text-gray-800">{item.name}</td>
                     <td className="px-3 py-2.5 text-gray-500 text-xs">{CATEGORY_LABELS[item.category] ?? item.category}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums">€{item.price.toFixed(2)}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-500">€{item.buyingPrice.toFixed(2)}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">
+                      {editPrice[item.id] ? (
+                        <input type="number" step="0.01" value={editPrice[item.id].price} onChange={e => setEditPrice(ep => ({ ...ep, [item.id]: { ...ep[item.id], price: e.target.value } }))} className="w-16 border border-[#4B5A2A]/40 rounded px-1.5 py-0.5 text-right text-xs" autoFocus />
+                      ) : (
+                        <button onClick={() => setEditPrice(ep => ({ ...ep, [item.id]: { price: String(item.price), buyingPrice: String(item.buyingPrice) } }))} className="hover:underline hover:text-[#4B5A2A]">€{item.price.toFixed(2)}</button>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-500">
+                      {editPrice[item.id] ? (
+                        <span className="flex items-center justify-end gap-1">
+                          <input type="number" step="0.001" value={editPrice[item.id].buyingPrice} onChange={e => setEditPrice(ep => ({ ...ep, [item.id]: { ...ep[item.id], buyingPrice: e.target.value } }))} className="w-16 border border-[#4B5A2A]/40 rounded px-1.5 py-0.5 text-right text-xs" />
+                          <button onClick={() => savePrice(item.id)} className="text-green-600 text-xs hover:text-green-800">✓</button>
+                          <button onClick={() => setEditPrice(ep => { const n = { ...ep }; delete n[item.id]; return n; })} className="text-gray-400 text-xs hover:text-gray-600">✕</button>
+                        </span>
+                      ) : (
+                        <button onClick={() => setEditPrice(ep => ({ ...ep, [item.id]: { price: String(item.price), buyingPrice: String(item.buyingPrice) } }))} className="hover:underline">€{item.buyingPrice.toFixed(2)}</button>
+                      )}
+                    </td>
                     <td className="px-3 py-2.5 text-right tabular-nums text-green-700">€{gain.toFixed(2)}</td>
                     <td className="px-3 py-2.5 text-right tabular-nums text-green-700">{gainPct.toFixed(0)}%</td>
                     <td className="px-3 py-2.5 text-center"><Toggle on={item.inStock} onClick={() => toggle(item.id, 'inStock', !item.inStock)} /></td>
