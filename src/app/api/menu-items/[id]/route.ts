@@ -7,46 +7,24 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireAdmin(request);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const { id } = await params;
     const body = await request.json();
-    const {
-      name,
-      ingredients,
-      description,
-      price,
-      purchasableOnline,
-      inStock,
-      visibleInMenu,
-      imageUrl,
-    } = body;
+    const { name, category, ingredients, description, price, buyingPrice, inStock, visibleInMenu } = body;
 
-    const updateData: Record<string, unknown> = {};
-    if (name !== undefined) updateData.name = name;
-    if (ingredients !== undefined)
-      updateData.ingredients = Array.isArray(ingredients)
-        ? ingredients
-        : String(ingredients)
-            .split(',')
-            .map((s: string) => s.trim());
-    if (description !== undefined) updateData.description = description;
-    if (price !== undefined) updateData.price = parseFloat(price);
-    if (purchasableOnline !== undefined)
-      updateData.purchasableOnline = Boolean(purchasableOnline);
-    if (inStock !== undefined) updateData.inStock = Boolean(inStock);
-    if (visibleInMenu !== undefined)
-      updateData.visibleInMenu = Boolean(visibleInMenu);
-    if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
+    const data: Record<string, unknown> = {};
+    if (name !== undefined) data.name = name;
+    if (category !== undefined) data.category = category;
+    if (ingredients !== undefined) data.ingredients = Array.isArray(ingredients) ? ingredients : String(ingredients).split(',').map((s: string) => s.trim());
+    if (description !== undefined) data.description = description;
+    if (price !== undefined) data.price = parseFloat(price);
+    if (buyingPrice !== undefined) data.buyingPrice = parseFloat(buyingPrice);
+    if (inStock !== undefined) data.inStock = Boolean(inStock);
+    if (visibleInMenu !== undefined) data.visibleInMenu = Boolean(visibleInMenu);
 
-    const item = await prisma.menuItem.update({
-      where: { id },
-      data: updateData,
-    });
-
+    const item = await prisma.menuItem.update({ where: { id }, data });
     return NextResponse.json(item);
   } catch (error) {
     console.error('[PUT /api/menu-items/[id]]', error);
@@ -59,9 +37,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await requireAdmin(request);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const { id } = await params;
