@@ -38,3 +38,5 @@ Thumbs.db
 postgres_data/
 
 *.DS_Store
+
+CLAUDE.md

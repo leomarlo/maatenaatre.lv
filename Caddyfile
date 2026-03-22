@@ -1,0 +1,7 @@
+www.maatenaatre.lv {
+    redir https://maatenaatre.lv{uri} permanent
+}
+
+maatenaatre.lv {
+    reverse_proxy app:3000
+}
