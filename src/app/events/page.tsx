@@ -1,16 +1,37 @@
-export default function EventsPage() {
+import { prisma } from '@/lib/db';
+import { getSession } from '@/lib/auth';
+import EventsClient from '@/components/EventsClient';
+
+export default async function EventsPage() {
+  const [events, session] = await Promise.all([
+    prisma.event.findMany({
+      where: { visible: true },
+      orderBy: { date: 'asc' },
+      include: { _count: { select: { registrations: true } } },
+    }),
+    getSession(),
+  ]);
+
+  // If user is logged in, also fetch their registrations
+  let userRegistrations: string[] = [];
+  if (session) {
+    const regs = await prisma.eventRegistration.findMany({
+      where: { userId: session.userId },
+      select: { eventId: true },
+    });
+    userRegistrations = regs.map(r => r.eventId);
+  }
+
   return (
-    <div className="min-h-screen pt-20 bg-[#4B5A2A]">
-      <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-        <h1 className="text-4xl font-bold text-white mb-4">Events</h1>
-        <div className="w-12 h-px bg-white/40 mx-auto mb-8" />
-        <p className="text-white/70 text-lg italic">
-          Upcoming events coming soon.
-        </p>
-        <p className="text-white/40 text-sm mt-4 tracking-widest uppercase">
-          Matīsa iela 8, Rīga
-        </p>
-      </div>
-    </div>
+    <EventsClient
+      events={events.map(e => ({
+        ...e,
+        date: e.date.toISOString(),
+        registrationCount: e._count.registrations,
+      }))}
+      isLoggedIn={!!session}
+      userEmail={session?.email ?? null}
+      userRegistrations={userRegistrations}
+    />
   );
 }

@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -28,9 +29,22 @@ export default function HomePage() {
         <p className="text-white italic text-2xl md:text-3xl font-light tracking-wider mb-3 drop-shadow">
           meža bārs
         </p>
-        <p className="text-white/70 text-sm tracking-widest uppercase">
+        <p className="text-white/70 text-sm tracking-widest uppercase mb-10">
           Matīsa iela 8, Rīga
         </p>
+
+        {/* Nav links */}
+        <div className="flex items-center gap-8">
+          <Link href="/menu" className="text-white/80 hover:text-white text-sm tracking-widest uppercase transition-colors">
+            Ēdienkarte
+          </Link>
+          <Link href="/events" className="text-white/80 hover:text-white text-sm tracking-widest uppercase transition-colors">
+            Pasākumi
+          </Link>
+          <Link href="/about" className="text-white/80 hover:text-white text-sm tracking-widest uppercase transition-colors">
+            Par mums
+          </Link>
+        </div>
       </div>
     </div>
   );

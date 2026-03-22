@@ -29,7 +29,8 @@ function VerifyContent() {
           const data = await res.json();
           throw new Error(data.error ?? 'Verification failed');
         }
-        router.push('/admin');
+        const from = searchParams.get('from');
+        router.push(from && from.startsWith('/') ? from : '/admin');
         router.refresh();
       })
       .catch((err: Error) => {
