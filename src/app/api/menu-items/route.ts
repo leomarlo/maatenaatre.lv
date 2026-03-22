@@ -6,7 +6,8 @@ export async function GET() {
   try {
     const items = await prisma.menuItem.findMany({
       where: { visibleInMenu: true },
-      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, category: true, ingredients: true, description: true, price: true, inStock: true },
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
     return NextResponse.json(items);
   } catch (error) {
@@ -17,40 +18,24 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const session = await requireAdmin(request);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
     const body = await request.json();
-    const {
-      name,
-      ingredients,
-      description,
-      price,
-      purchasableOnline,
-      inStock,
-      visibleInMenu,
-      imageUrl,
-    } = body;
+    const { name, category, ingredients, description, price, buyingPrice, inStock, visibleInMenu } = body;
 
     const item = await prisma.menuItem.create({
       data: {
         name,
-        ingredients: Array.isArray(ingredients)
-          ? ingredients
-          : String(ingredients)
-              .split(',')
-              .map((s: string) => s.trim()),
-        description,
+        category,
+        ingredients: Array.isArray(ingredients) ? ingredients : String(ingredients).split(',').map((s: string) => s.trim()),
+        description: description ?? '',
         price: parseFloat(price),
-        purchasableOnline: Boolean(purchasableOnline),
+        buyingPrice: parseFloat(buyingPrice ?? 0),
         inStock: Boolean(inStock),
         visibleInMenu: Boolean(visibleInMenu),
-        imageUrl: imageUrl || null,
       },
     });
-
     return NextResponse.json(item, { status: 201 });
   } catch (error) {
     console.error('[POST /api/menu-items]', error);

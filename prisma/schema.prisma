@@ -26,15 +26,31 @@ model AuthToken {
 }
 
 model MenuItem {
+  id            String   @id @default(uuid())
+  name          String
+  category      String
+  ingredients   String[]
+  description   String   @default("")
+  price         Float
+  buyingPrice   Float    @default(0)
+  inStock       Boolean  @default(true)
+  visibleInMenu Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model InventoryItem {
   id                String   @id @default(uuid())
   name              String
-  ingredients       String[]
-  description       String
-  price             Float
-  purchasableOnline Boolean  @default(false)
-  inStock           Boolean  @default(true)
-  visibleInMenu     Boolean  @default(true)
-  imageUrl          String?
+  category          String   @default("")
+  supplier          String   @default("")
+  size              String   @default("")
+  pricePerUnit      Float    @default(0)
+  costPerDosage     Float    @default(0)
+  dosageDescription String   @default("")
+  quantity          Float    @default(0)
+  unit              String   @default("gab.")
+  notes             String   @default("")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

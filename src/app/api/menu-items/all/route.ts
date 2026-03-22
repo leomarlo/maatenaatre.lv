@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const items = await prisma.menuItem.findMany({
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
     });
     return NextResponse.json(items);
   } catch (error) {
