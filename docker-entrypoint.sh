@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-echo "Running database migrations..."
-node_modules/.bin/prisma migrate deploy
+echo "Syncing database schema..."
+node_modules/.bin/prisma db push --accept-data-loss
 
 if [ "${SEED_DB:-false}" = "true" ]; then
   echo "Seeding database..."

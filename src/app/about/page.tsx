@@ -1,3 +1,17 @@
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Par mums',
+  description:
+    'Māte Nātre — meža bārs Rīgā, Matīsa ielā 8. Uzzini vairāk par mūsu filosofiju un atrašanās vietu.',
+  alternates: { canonical: '/about' },
+  openGraph: {
+    title: 'Par mums | Māte Nātre',
+    description: 'Māte Nātre — meža bārs Rīgā. Uzzini vairāk par mums.',
+    url: 'https://maatenaatre.lv/about',
+  },
+};
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen pt-20 bg-[#f5f4ef]">
