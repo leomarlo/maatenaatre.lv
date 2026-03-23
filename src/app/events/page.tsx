@@ -1,6 +1,19 @@
+import { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import EventsClient from '@/components/EventsClient';
+
+export const metadata: Metadata = {
+  title: 'Pasākumi',
+  description:
+    'Meža ekskursijas, kokteiļu darbnīcas un augu darbnīcas Māte Nātre. Reģistrējies tiešsaistē.',
+  alternates: { canonical: '/events' },
+  openGraph: {
+    title: 'Pasākumi | Māte Nātre',
+    description: 'Meža ekskursijas, kokteiļu darbnīcas un augu darbnīcas. Reģistrējies tiešsaistē.',
+    url: 'https://maatenaatre.lv/events',
+  },
+};
 
 export default async function EventsPage() {
   const [events, session] = await Promise.all([
