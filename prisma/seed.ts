@@ -373,7 +373,79 @@ async function main() {
     ],
   });
 
-  console.log('Seeded menu items and inventory items.');
+  // ── Events ────────────────────────────────────────────────────────────────
+
+  await prisma.event.deleteMany();
+
+  await prisma.event.createMany({
+    data: [
+      {
+        title: 'Meža ekskursija',
+        type: 'excursion',
+        date: new Date('2026-04-26T11:00:00'),
+        guide: '',
+        description: 'Pastaiga mežā, iepazīstot savvaļas augus un dabas ritmus.',
+        requiresRegistration: true,
+        visible: true,
+      },
+      {
+        title: 'Meža ekskursija',
+        type: 'excursion',
+        date: new Date('2026-05-03T11:00:00'),
+        guide: '',
+        description: 'Pastaiga mežā, iepazīstot savvaļas augus un dabas ritmus.',
+        requiresRegistration: true,
+        visible: true,
+      },
+      {
+        title: 'Meža ekskursija',
+        type: 'excursion',
+        date: new Date('2026-05-10T11:00:00'),
+        guide: '',
+        description: 'Pastaiga mežā, iepazīstot savvaļas augus un dabas ritmus.',
+        requiresRegistration: true,
+        visible: true,
+      },
+      {
+        title: 'Kokteiļu darbnīca',
+        type: 'workshop',
+        date: new Date('2026-05-14T18:00:00'),
+        guide: '',
+        description: 'Uzzini, kā radīt botāniskos kokteiļus ar savvaļas augiem un sezonāliem sīrupiem.',
+        requiresRegistration: true,
+        visible: true,
+      },
+      {
+        title: 'Meža ekskursija',
+        type: 'excursion',
+        date: new Date('2026-05-17T11:00:00'),
+        guide: '',
+        description: 'Pastaiga mežā, iepazīstot savvaļas augus un dabas ritmus.',
+        requiresRegistration: true,
+        visible: true,
+      },
+      {
+        title: 'Meža ekskursija',
+        type: 'excursion',
+        date: new Date('2026-05-24T11:00:00'),
+        guide: '',
+        description: 'Pastaiga mežā, iepazīstot savvaļas augus un dabas ritmus.',
+        requiresRegistration: true,
+        visible: true,
+      },
+      {
+        title: 'Augu darbnīca',
+        type: 'workshop',
+        date: new Date('2026-05-31T11:00:00'),
+        guide: '',
+        description: 'Iepazīsti ārstnieciskos un ēdamos savvaļas augus un to izmantošanu ikdienā.',
+        requiresRegistration: true,
+        visible: true,
+      },
+    ],
+  });
+
+  console.log('Seeded menu items, inventory items, and events.');
 }
 
 main()
