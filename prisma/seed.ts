@@ -375,6 +375,28 @@ async function main() {
 
   // ── Events ────────────────────────────────────────────────────────────────
 
+  // ── Opening hours ─────────────────────────────────────────────────────────
+
+  const hoursMap: Record<number, { eveningOpen: string | null; eveningClose: string | null }> = {
+    1: { eveningOpen: null, eveningClose: null },         // Monday – closed
+    2: { eveningOpen: null, eveningClose: null },         // Tuesday – closed
+    3: { eveningOpen: '15:00', eveningClose: '19:00' },  // Wednesday
+    4: { eveningOpen: '15:00', eveningClose: '19:00' },  // Thursday
+    5: { eveningOpen: '15:00', eveningClose: '19:00' },  // Friday
+    6: { eveningOpen: '12:00', eveningClose: '16:00' },  // Saturday
+    7: { eveningOpen: '12:00', eveningClose: '16:00' },  // Sunday
+  };
+  for (const [dayStr, times] of Object.entries(hoursMap)) {
+    const day = Number(dayStr);
+    await prisma.openingHours.upsert({
+      where: { dayOfWeek: day },
+      update: { ...times },
+      create: { dayOfWeek: day, ...times },
+    });
+  }
+
+  // ── Events ────────────────────────────────────────────────────────────────
+
   await prisma.event.deleteMany();
 
   await prisma.event.createMany({

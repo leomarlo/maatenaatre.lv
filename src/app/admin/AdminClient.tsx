@@ -393,6 +393,8 @@ interface AdminEvent {
   registrations: { id: string; name: string; user: { email: string } }[];
 }
 
+type EventEdit = { guide: string; cost: string; spots: string };
+
 function EventsTab() {
   const [events, setEvents] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -400,6 +402,8 @@ function EventsTab() {
   const [form, setForm] = useState(DEFAULT_EVENT_FORM);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [editField, setEditField] = useState<{ id: string; field: keyof EventEdit } | null>(null);
+  const [editVal, setEditVal] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -421,6 +425,21 @@ function EventsTab() {
   async function del(id: string) {
     if (!confirm('Dzēst šo pasākumu?')) return;
     await fetch(`/api/events/${id}`, { method: 'DELETE' });
+    load();
+  }
+
+  function startEdit(id: string, field: keyof EventEdit, current: string) {
+    setEditField({ id, field });
+    setEditVal(current);
+  }
+
+  async function saveEdit(id: string, field: keyof EventEdit) {
+    const body: Record<string, string | number | null> = {};
+    if (field === 'cost') body.cost = editVal === '' ? null : parseFloat(editVal);
+    else if (field === 'spots') body.spots = editVal === '' ? null : parseInt(editVal);
+    else body.guide = editVal;
+    await fetch(`/api/events/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    setEditField(null);
     load();
   }
 
@@ -515,9 +534,36 @@ function EventsTab() {
                     </td>
                     <td className="px-3 py-2.5 text-gray-500 text-xs">{EVENT_TYPES.find(t => t.value === event.type)?.label ?? event.type}</td>
                     <td className="px-3 py-2.5 text-gray-600 text-xs">{new Date(event.date).toLocaleDateString('lv-LV', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                    <td className="px-3 py-2.5 text-gray-500 text-xs">{event.guide}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums">{event.cost !== null ? `€${event.cost.toFixed(2)}` : '—'}</td>
-                    <td className="px-3 py-2.5 text-center text-xs">{event.spots ?? '∞'}</td>
+                    <td className="px-3 py-2.5 text-gray-500 text-xs">
+                      {editField?.id === event.id && editField.field === 'guide' ? (
+                        <span className="flex items-center gap-1">
+                          <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(event.id, 'guide'); if (e.key === 'Escape') setEditField(null); }} className="border border-[#4B5A2A]/40 rounded px-1.5 py-0.5 w-28 text-xs focus:outline-none" />
+                          <button onClick={() => saveEdit(event.id, 'guide')} className="text-[#4B5A2A] text-xs">✓</button>
+                        </span>
+                      ) : (
+                        <span className="cursor-pointer hover:text-[#4B5A2A]" onClick={() => startEdit(event.id, 'guide', event.guide ?? '')}>{event.guide || <span className="text-gray-300">—</span>}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">
+                      {editField?.id === event.id && editField.field === 'cost' ? (
+                        <span className="flex items-center justify-end gap-1">
+                          <input autoFocus type="number" step="0.01" value={editVal} onChange={e => setEditVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(event.id, 'cost'); if (e.key === 'Escape') setEditField(null); }} className="border border-[#4B5A2A]/40 rounded px-1.5 py-0.5 w-20 text-xs focus:outline-none text-right" />
+                          <button onClick={() => saveEdit(event.id, 'cost')} className="text-[#4B5A2A] text-xs">✓</button>
+                        </span>
+                      ) : (
+                        <span className="cursor-pointer hover:text-[#4B5A2A]" onClick={() => startEdit(event.id, 'cost', event.cost !== null ? String(event.cost) : '')}>{event.cost !== null ? `€${event.cost.toFixed(2)}` : <span className="text-gray-300">—</span>}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-xs">
+                      {editField?.id === event.id && editField.field === 'spots' ? (
+                        <span className="flex items-center justify-center gap-1">
+                          <input autoFocus type="number" value={editVal} onChange={e => setEditVal(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(event.id, 'spots'); if (e.key === 'Escape') setEditField(null); }} className="border border-[#4B5A2A]/40 rounded px-1.5 py-0.5 w-16 text-xs focus:outline-none text-center" />
+                          <button onClick={() => saveEdit(event.id, 'spots')} className="text-[#4B5A2A] text-xs">✓</button>
+                        </span>
+                      ) : (
+                        <span className="cursor-pointer hover:text-[#4B5A2A]" onClick={() => startEdit(event.id, 'spots', event.spots !== null ? String(event.spots) : '')}>{event.spots ?? <span className="text-gray-300">∞</span>}</span>
+                      )}
+                    </td>
                     <td className="px-3 py-2.5 text-center text-xs font-medium">{event._count.registrations}</td>
                     <td className="px-3 py-2.5 text-center"><Toggle on={event.visible} onClick={() => toggleVisible(event.id, !event.visible)} /></td>
                     <td className="px-3 py-2.5 text-right"><button onClick={() => del(event.id)} className="text-red-400 hover:text-red-600 text-xs">dzēst</button></td>
@@ -547,10 +593,111 @@ function EventsTab() {
   );
 }
 
+// ── Opening hours tab ─────────────────────────────────────────────────────────
+
+const DAY_NAMES: Record<number, string> = {
+  1: 'Pirmdiena', 2: 'Otrdiena', 3: 'Trešdiena',
+  4: 'Ceturtdiena', 5: 'Piektdiena', 6: 'Sestdiena', 7: 'Svētdiena',
+};
+
+type HoursRow = { dayOfWeek: number; morningOpen: string; morningClose: string; eveningOpen: string; eveningClose: string };
+
+const EMPTY_HOURS: HoursRow[] = [1, 2, 3, 4, 5, 6, 7].map(d => ({
+  dayOfWeek: d, morningOpen: '', morningClose: '', eveningOpen: '', eveningClose: '',
+}));
+
+function HoursTab() {
+  const [rows, setRows] = useState<HoursRow[]>(EMPTY_HOURS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/opening-hours')
+      .then(r => r.json())
+      .then((data: { dayOfWeek: number; morningOpen: string | null; morningClose: string | null; eveningOpen: string | null; eveningClose: string | null }[]) => {
+        setRows(EMPTY_HOURS.map(empty => {
+          const found = data.find(d => d.dayOfWeek === empty.dayOfWeek);
+          return found ? { dayOfWeek: found.dayOfWeek, morningOpen: found.morningOpen ?? '', morningClose: found.morningClose ?? '', eveningOpen: found.eveningOpen ?? '', eveningClose: found.eveningClose ?? '' } : empty;
+        }));
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  function update(dayOfWeek: number, field: keyof Omit<HoursRow, 'dayOfWeek'>, value: string) {
+    setRows(rs => rs.map(r => r.dayOfWeek === dayOfWeek ? { ...r, [field]: value } : r));
+    setSaved(false);
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      const payload = rows.map(r => ({
+        dayOfWeek: r.dayOfWeek,
+        morningOpen: r.morningOpen || null,
+        morningClose: r.morningClose || null,
+        eveningOpen: r.eveningOpen || null,
+        eveningClose: r.eveningClose || null,
+      }));
+      await fetch('/api/opening-hours', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      setSaved(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const timeInput = (day: number, field: keyof Omit<HoursRow, 'dayOfWeek'>) => (
+    <input
+      type="time"
+      value={rows.find(r => r.dayOfWeek === day)?.[field] ?? ''}
+      onChange={e => update(day, field, e.target.value)}
+      className="border border-[#4B5A2A]/30 rounded px-2 py-1 text-sm w-24 focus:outline-none focus:border-[#4B5A2A] bg-white text-center"
+    />
+  );
+
+  if (loading) return <div className="text-center py-10 text-[#4B5A2A]/40">Ielādē…</div>;
+
+  return (
+    <div>
+      <div className="bg-white rounded-lg border border-[#4B5A2A]/20 overflow-x-auto">
+        <table className="w-full text-sm min-w-[520px]">
+          <thead>
+            <tr className="bg-[#4B5A2A]/5 text-[#4B5A2A] text-xs uppercase tracking-wide text-left">
+              <th className="px-4 py-3">Diena</th>
+              <th className="px-4 py-3 text-center">Rīts no</th>
+              <th className="px-4 py-3 text-center">Rīts līdz</th>
+              <th className="px-4 py-3 text-center">Vakars no</th>
+              <th className="px-4 py-3 text-center">Vakars līdz</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={row.dayOfWeek} className={`border-t border-[#4B5A2A]/10 ${i % 2 === 0 ? '' : 'bg-[#4B5A2A]/[0.02]'}`}>
+                <td className="px-4 py-2.5 font-medium text-gray-700">{DAY_NAMES[row.dayOfWeek]}</td>
+                <td className="px-4 py-2.5 text-center">{timeInput(row.dayOfWeek, 'morningOpen')}</td>
+                <td className="px-4 py-2.5 text-center">{timeInput(row.dayOfWeek, 'morningClose')}</td>
+                <td className="px-4 py-2.5 text-center">{timeInput(row.dayOfWeek, 'eveningOpen')}</td>
+                <td className="px-4 py-2.5 text-center">{timeInput(row.dayOfWeek, 'eveningClose')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-[#4B5A2A]/50 mt-2">Atstāj lauku tukšu, lai dienu atzīmētu kā slēgtu.</p>
+      <div className="mt-4 flex items-center gap-3">
+        <button onClick={save} disabled={saving} className="px-5 py-2 bg-[#4B5A2A] text-white rounded text-sm hover:bg-[#3a4520] disabled:opacity-60">
+          {saving ? 'Saglabā…' : 'Saglabāt'}
+        </button>
+        {saved && <span className="text-sm text-[#4B5A2A]/60">Saglabāts ✓</span>}
+      </div>
+    </div>
+  );
+}
+
 // ── Main AdminClient ──────────────────────────────────────────────────────────
 
 export default function AdminClient() {
-  const [tab, setTab] = useState<'menu' | 'inventory' | 'events'>('menu');
+  const [tab, setTab] = useState<'menu' | 'inventory' | 'events' | 'hours'>('menu');
 
   return (
     <div className="min-h-screen pt-20 bg-[#f5f4ef]">
@@ -563,18 +710,18 @@ export default function AdminClient() {
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-[#4B5A2A]/15">
-          {(['menu', 'inventory', 'events'] as const).map(t => (
+          {(['menu', 'inventory', 'events', 'hours'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-5 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${tab === t ? 'border-[#4B5A2A] text-[#4B5A2A]' : 'border-transparent text-[#4B5A2A]/50 hover:text-[#4B5A2A]'}`}
             >
-              {t === 'menu' ? 'Ēdienkarte' : t === 'inventory' ? 'Krājumi' : 'Pasākumi'}
+              {t === 'menu' ? 'Ēdienkarte' : t === 'inventory' ? 'Krājumi' : t === 'events' ? 'Pasākumi' : 'Darba laiks'}
             </button>
           ))}
         </div>
 
-        {tab === 'menu' ? <MenuTab /> : tab === 'inventory' ? <InventoryTab /> : <EventsTab />}
+        {tab === 'menu' ? <MenuTab /> : tab === 'inventory' ? <InventoryTab /> : tab === 'events' ? <EventsTab /> : <HoursTab />}
       </div>
     </div>
   );

@@ -72,6 +72,14 @@ model Event {
   registrations        EventRegistration[]
 }
 
+model OpeningHours {
+  dayOfWeek    Int     @id // 1=Monday … 7=Sunday
+  morningOpen  String?
+  morningClose String?
+  eveningOpen  String?
+  eveningClose String?
+}
+
 model EventRegistration {
   id        String   @id @default(uuid())
   eventId   String
